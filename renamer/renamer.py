@@ -22,12 +22,12 @@ def addPrefixOrSuffix(prefix, suffix):
 
 
 # Searches for an object of given name and renames it another given name.
-def searchAndReplace(search, replace):
-    # First check if the searched for object exists, if it exists, rename it.
-    if cmds.objExists(search):
-        cmds.rename(search, replace)
-    else:
-        cmds.warning("The object %s does not exist." % search)
+# def searchAndReplace(search, replace):
+#     # First check if the searched for object exists, if it exists, rename it.
+#     if cmds.objExists(search):
+#         cmds.rename(search, replace)
+#     else:
+#         cmds.warning("The object %s does not exist." % search)
 
 
 # Renames and numbers objects with chosen padding to the number.
@@ -44,8 +44,6 @@ def renameAndNumber(rename, start, padding):
 
 
 
-# UI
-
 
 # A class that holds all the UI details for the Renamer window.
 class RenamerWindow(object):
@@ -53,10 +51,7 @@ class RenamerWindow(object):
     height = 330
     width = 300
 
-    # A test function to see if the searchAndReplace function is getting the right value.
-    def printText(self, *args):
-        print("Search = %s" % self.search)
-
+    # UI
 
     def show(self):
         # If a window named "Renamer" already exists, delete the UI.
@@ -82,24 +77,19 @@ class RenamerWindow(object):
         # Search and Replace.
         cmds.rowLayout(numberOfColumns=2)
         cmds.text(label="Search:", align='right', w=textWidth)
-        searchField = cmds.textField(w=fieldWidth, editable=True, changeCommand=self.printText)
-        # Search query.
-        self.search =cmds.textField(searchField, q=True, text=True)
+        self.searchField = cmds.textField(w=fieldWidth, editable=True)
 
         cmds.setParent('..')
 
         cmds.rowLayout(numberOfColumns=2)
         cmds.text(label="Replace:", align='right', w=textWidth)
-        replaceField = cmds.textField(w=fieldWidth)
-        # Replace query.
-        replace = cmds.textField(replaceField, query=True, text=True)
+        self.replaceField = cmds.textField(w=fieldWidth, editable=True)
 
         cmds.setParent('..')
 
         cmds.separator(h=5)
         cmds.button("Search and Replace", w=buttonWidth, align='centre',
-                    #command=Callback(searchAndReplace, search, replace))
-                    command=self.printText)
+                    command=Callback(self.searchAndReplace))
 
         cmds.separator(h=20, style='in')
 
@@ -150,6 +140,20 @@ class RenamerWindow(object):
         cmds.setParent('..')
 
         cmds.button("Rename and Number", w=buttonWidth, align='center')
+
+    # RENAMER PROCS
+
+    # Searches for an object of given name and renames it another given name.
+    def searchAndReplace(self):
+        # Search and Replace queries.
+        search = cmds.textField(self.searchField, q=1, text=1)
+        replace = cmds.textField(self.replaceField, q=1, text=1)
+
+        # First check if the searched for object exists, if it exists, rename it.
+        if cmds.objExists(search):
+            cmds.rename(search, replace)
+        else:
+            cmds.warning("The object %s does not exist." % search)
 
 
 
