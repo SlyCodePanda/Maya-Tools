@@ -1,4 +1,6 @@
 from maya import cmds
+# Using pymel.all for it's Callback function.
+from pymel.all import *
 
 
 
@@ -51,11 +53,17 @@ class RenamerWindow(object):
     height = 330
     width = 300
 
+    # A test function to see if the searchAndReplace function is getting the right value.
+    def printText(self, *args):
+        print("Search = %s" % self.search)
+
+
     def show(self):
         # If a window named "Renamer" already exists, delete the UI.
         if cmds.window(self.windowName, query=True, exists=True):
             cmds.deleteUI(self.windowName)
 
+        # Create the window, build the UI, then show the window.
         self.window = cmds.window(self.windowName, w=self.width, h=self.height, mnb=False, sizeable=False)
         self.buildUI()
         cmds.showWindow()
@@ -71,21 +79,27 @@ class RenamerWindow(object):
         # Main layouts.
         mainColumnLayout = cmds.columnLayout(w=self.width, h=self.height)
 
-        cmds.rowLayout(numberOfColumns=2)
         # Search and Replace.
+        cmds.rowLayout(numberOfColumns=2)
         cmds.text(label="Search:", align='right', w=textWidth)
-        cmds.textField(w=fieldWidth)
+        searchField = cmds.textField(w=fieldWidth, editable=True, changeCommand=self.printText)
+        # Search query.
+        self.search =cmds.textField(searchField, q=True, text=True)
 
         cmds.setParent('..')
 
         cmds.rowLayout(numberOfColumns=2)
         cmds.text(label="Replace:", align='right', w=textWidth)
-        cmds.textField(w=fieldWidth)
+        replaceField = cmds.textField(w=fieldWidth)
+        # Replace query.
+        replace = cmds.textField(replaceField, query=True, text=True)
 
         cmds.setParent('..')
 
         cmds.separator(h=5)
-        cmds.button("Search and Replace", w=buttonWidth, align='centre')
+        cmds.button("Search and Replace", w=buttonWidth, align='centre',
+                    #command=Callback(searchAndReplace, search, replace))
+                    command=self.printText)
 
         cmds.separator(h=20, style='in')
 
@@ -136,6 +150,7 @@ class RenamerWindow(object):
         cmds.setParent('..')
 
         cmds.button("Rename and Number", w=buttonWidth, align='center')
+
 
 
 
