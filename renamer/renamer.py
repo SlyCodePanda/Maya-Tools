@@ -5,7 +5,7 @@ from maya import cmds
 class RenamerWindow(object):
     windowName = "Renamer"
     height = 370
-    width = 300
+    width = 310
 
     # UI
 
@@ -37,9 +37,9 @@ class RenamerWindow(object):
         cmds.deleteUI(self.windowName)
 
     def buildUI(self):
-        textWidth = 45
+        textWidth = 50
         fieldWidth = 250
-        buttonWidth = 295
+        buttonWidth = 305
 
         cmds.setParent(self.window)
 
@@ -61,7 +61,7 @@ class RenamerWindow(object):
 
         cmds.separator(h=5)
         cmds.button("Search and Replace", w=buttonWidth, align='centre', command=self.searchAndReplace,
-                    ann="Search for object and rename it")
+                    ann="Search for occurrences of 'Search' and replace it with 'Rename'")
 
         cmds.separator(h=20, style='in')
 
@@ -123,17 +123,19 @@ class RenamerWindow(object):
 
     # RENAMER PROCS
 
-    # Searches for an object of given name and renames it another given name.
+    # Searches through selected object(s) and replaces occurrences of 'Search' with 'Replace'.
     def searchAndReplace(self, *args):
+        objects = cmds.ls(selection=True, long=True)
         # Search and Replace queries.
         search = cmds.textField(self.searchField, q=True, text=True)
         replace = cmds.textField(self.replaceField, q=True, text=True)
 
-        # First check if the searched for object exists, if it exists, rename it.
-        if cmds.objExists(search):
-            cmds.rename(search, replace)
-        else:
-            cmds.error("The object %s does not exist." % search)
+        for curObj in objects:
+            oldName = curObj.split("|")[-1]
+            newName = oldName.replace(search, replace)
+
+            cmds.rename(oldName, newName)
+
 
 
     # Add prefix to a list of objects.
