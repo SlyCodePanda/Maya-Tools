@@ -106,7 +106,7 @@ class RenamerWindow(object):
 
         cmds.rowLayout(numberOfColumns=2)
         cmds.text(label="Padding:", align='right', w=textWidth)
-        self.paddingField = cmds.textField(w=50, text=0, ann="Padding field")
+        self.paddingField = cmds.textField(w=50, text=0, ann="Padding field (how many 0's should be added)")
 
         cmds.setParent('..')
 
@@ -130,6 +130,14 @@ class RenamerWindow(object):
         search = cmds.textField(self.searchField, q=True, text=True)
         replace = cmds.textField(self.replaceField, q=True, text=True)
 
+        if not objects:
+            cmds.warning("You need to select at least one object to search through.")
+            return
+
+        if not search or not replace:
+            cmds.warning("You need to enter something in the Search and Replace fields.")
+            return
+
         for curObj in objects:
             oldName = curObj.split("|")[-1]
             newName = oldName.replace(search, replace)
@@ -143,6 +151,14 @@ class RenamerWindow(object):
         prefix = cmds.textField(self.prefixField, q=True, text=True)
         objects = cmds.ls(selection=True, long=True)
 
+        if not objects:
+            cmds.warning("You need to select at least one object to add a prefix to.")
+            return
+
+        if not prefix:
+            cmds.warning("You need to enter a prefix to add to selection.")
+            return
+
         for i in range(len(objects)):
             # Get the name of the current object in the list.
             oldName = objects[i].split("|")[-1]
@@ -154,10 +170,18 @@ class RenamerWindow(object):
             cmds.rename(oldName, newName)
 
 
-    # Add prefix to a list of objects.
+    # Add suffix to a list of objects.
     def addSuffix(self, *args):
         suffix = cmds.textField(self.suffixField, q=True, text=True)
         objects = cmds.ls(selection=True, long=True)
+
+        if not objects:
+            cmds.warning("You need to select at least one object to add a suffix to.")
+            return
+
+        if not suffix:
+            cmds.warning("You need to enter a suffix to add to selection.")
+            return
 
         for i in range(len(objects)):
             # Get the name of the current object in the list.
@@ -172,15 +196,37 @@ class RenamerWindow(object):
 
     # Renames and numbers objects with chosen padding to the number.
     def renameAndNumber(self, *args):
-        rename = cmds.textField(self.renameField, q=True, text=True)
-        start = int(cmds.textField(self.startField, q=True, text=True))
-        padding = cmds.textField(self.paddingField, q=True, text=True)
         objects = cmds.ls(selection=True, long=True)
-        paddingLength = len(padding)
+        rename = cmds.textField(self.renameField, q=True, text=True)
+
+        # Error Checking.
+        try:
+            start = int(cmds.textField(self.startField, q=True, text=True))
+        except ValueError:
+            cmds.warning("You need to enter a valid starting number before renaming and numbering.")
+            return
+
+        try:
+            padding = int(cmds.textField(self.paddingField, q=True, text=True))
+        except ValueError:
+            cmds.warning("You need to enter a valid numbered amount of padding before renaming and numbering.")
+            return
+
+        if not objects:
+            cmds.warning("You need to select at least one object to rename and number.")
+            return
+
+        if not rename:
+            cmds.warning("You need to enter a name to rename the object(s) to.")
+            return
 
         for i in range(len(objects)):
             oldName = objects[i].split("|")[-1]
-            newName = rename + (str(start).zfill(paddingLength))
+            if padding == 0:
+                newName = rename + str(start)
+            else:
+                newName = rename + (str(start).zfill(padding+1))
+
             cmds.rename(oldName, newName)
             start += 1
 
