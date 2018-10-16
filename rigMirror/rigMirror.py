@@ -30,7 +30,7 @@ class rigMirror(object):
 
         children = cmds.listRelatives(node, c=True)
 
-        if children == None:
+        if children is None:
             return True
 
         for c in children:
@@ -58,15 +58,15 @@ class rigMirror(object):
 
             grpName = cmds.listRelatives(ctrlName, parent=True)
 
-            # If the object selected is a control with a group.
-            if grpName != None:
+            # If the selected object is a control in a group.
+            if grpName is not None:
                 grp = cmds.listRelatives(ctrlName, parent=True)[0]
                 # Duplicate groups and controls
                 duplicate = cmds.duplicate(ctrlName, rr=True, name=self.getNewSideName(ctrlName))
                 newGrp = cmds.group(duplicate, name=self.getNewSideName(grp), world=True)
 
-            # Scale the group at -1 in axis you want to mirror. For now we will just do it in X-axis.
-            if duplicate:
+                # Create a temporary group to use to scale the group in -1 along the X axis.
+                # May add functionality to choose which axis to scale across later.
                 group = cmds.listRelatives(duplicate, parent=True)
                 cmds.group(group, name="ctrls_mirrorGrp")
                 cmds.xform(group, os=True, piv=[0, 0, 0])
@@ -75,12 +75,33 @@ class rigMirror(object):
 
                 # Freeze transforms.
                 cmds.makeIdentity(group, apply=True, t=1, r=1, s=1, n=0)
-
                 # Clear construction history.
                 cmds.delete(group, constructionHistory=True)
-
                 # Re-center pivot
                 cmds.xform(group, centerPivots=True)
+
+            # If the object is without a group, and is not a group itself.
+            elif not self.isGroup(ctrlName):
+                duplicate = cmds.duplicate(ctrlName, rr=True, name=self.getNewSideName(ctrlName))
+                # Place lone transform in a temp group for scaling.
+                newGrp = cmds.group(duplicate, name=self.getNewSideName(ctrlName), world=True)
+
+                # Group and scale -1 in x axis.
+                group = cmds.listRelatives(duplicate, parent=True)
+                cmds.group(group, name="ctrls_mirrorGrp")
+                cmds.xform(group, os=True, piv=[0, 0, 0])
+                cmds.scale(-1, 1, 1, group)
+                cmds.ungroup("ctrls_mirrorGrp")
+
+                cmds.ungroup(newGrp)
+
+                # Freeze transforms.
+                cmds.makeIdentity(duplicate, apply=True, t=1, r=1, s=1, n=0)
+                # Clear construction history.
+                cmds.delete(duplicate, constructionHistory=True)
+                # Re-center pivot
+                cmds.xform(duplicate, centerPivots=True)
+
 
     # Get all the connections and store them in connections dictionary. Then set up connections on the other side.
     def mirrorConnections(self):
