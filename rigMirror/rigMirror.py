@@ -1,11 +1,12 @@
 from maya import cmds
-import re
 
 # A class that holds all functions for mirroring a rig.
 class rigMirror(object):
     # Class variables
     connections = {}
     controls = []
+    dupControls = []
+    joints = []
     curSide = ""
     newSide = ""
 
@@ -15,14 +16,25 @@ class rigMirror(object):
         self.newSide = newSide
 
         # Get the rig controls based on user selection.
-        # Get both groups and any children.
         self.controls = cmds.ls(sl=True, dag=True, type="transform")
+        self.joints = cmds.ls(sl=True, dag=True, type="joint")
 
-        print("CONTROLS : \n %s" % self.controls)
+        # Strip joints from controls list.
+        for cur in self.controls:
+            if cmds.objectType(cur) == "joint":
+                self.controls.remove(cur)
 
+        print("CONTROLS : \n" + str(self.controls))
+        print("JOINTS : \n" + str(self.joints))
+
+        # Duplicate and mirror rig controls from one side to the other.
         self.mirrorControls()
+        # Duplicate and mirror joints from one side to the other.
+        self.mirrorJoints()
 
-    # Class functions
+    ################################
+    # HELPER FUNCTIONS
+    ################################
 
     # Checks if node is a group.
     # Returns True if node is a group, False otherwise.
@@ -48,6 +60,10 @@ class rigMirror(object):
 
         return newName
 
+    ################################
+    # MIRROR FUNCTIONS
+    ################################
+
     def mirrorControls(self):
         # Duplicate top level group in hierarchy and rename it for new side.
         dup = cmds.duplicate(self.controls[0], name=self.getNewSideName(self.controls[0]))
@@ -60,8 +76,11 @@ class rigMirror(object):
 
         # Go through children list and rename them to the other side.
         for i in range(len(children)):
-            name = children[i].split("|")[-1]
-            cmds.rename(children[i], self.getNewSideName(name))
+            if cmds.objectType(children[i]) != 'joint':
+                name = children[i].split("|")[-1]
+                newName = cmds.rename(children[i], self.getNewSideName(name))
+                # Adding new duplicated controls to global list.
+                self.dupControls.append(newName)
 
         # Create a temporary group to use to scale the group in -1 along the X axis.
         # May add functionality to choose which axis to scale across later.
@@ -72,7 +91,31 @@ class rigMirror(object):
 
     # Duplicates and mirrors the skeleton (joints).
     def mirrorJoints(self):
-        pass
+        # Duplicate top level joint in hierarchy and rename it for new side.
+        dup = cmds.mirrorJoint(self.joints[0], mirrorYZ=True, mirrorBehavior=True, sr=[self.curSide, self.newSide])
+        constraints = []
+        joints = []
+        ctrls = []
+
+        # Add duplicated controls to new list (without the groups).
+        for i in range(len(self.dupControls)):
+            if not self.isGroup(self.dupControls[i]):
+                ctrls.append(self.dupControls[i])
+
+        # Add old parent contraints from the duplicates list to new list, and add joints to another new list.
+        for i in range(len(dup)):
+            if cmds.objectType(dup[i]) == "parentConstraint":
+                constraints.append(dup[i])
+            else:
+                joints.insert(0, dup[i])
+
+        # Parent contraint new side controls to right new joints.
+        for i in range(len(ctrls)):
+             curJoint = joints[i]
+             oldCon = constraints[i]
+             # Remove old constraint and add new one for new side.
+             cmds.parentConstraint(curJoint, oldCon, edit=True, rm=True)
+             cmds.parentConstraint(ctrls[i], curJoint, mo=True)
 
     # Get all the connections and store them in connections dictionary. Then set up connections on the other side.
     def mirrorConnections(self):
