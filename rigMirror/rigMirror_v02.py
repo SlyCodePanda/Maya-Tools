@@ -1,4 +1,5 @@
 from maya import cmds
+import pprint
 
 # Base class for building UI.
 class BaseWindow(object):
@@ -37,6 +38,9 @@ class rigMirror(BaseWindow):
 
     ikHandle = []
 
+    # Nested dictionary that will be built up based on user selection rig.
+    rig = {}
+
     curSide = ""
     newSide = ""
     scale = ""
@@ -54,21 +58,24 @@ class rigMirror(BaseWindow):
         print(str(self.selection))
 
         # Get FK and IK joints.
-        self.getFKjoints()
-        self.getIKjoints()
+        # self.getFKjoints()
+        # self.getIKjoints()
+        #
+        # # Get controls.
+        # self.getControls()
+        #
+        # # Get IKHandle.
+        # self.getIKhandle()
+        #
+        # # Get IK and FK constraints.
+        # self.getFKconstraints()
+        # self.getIKconstraints()
+        #
+        # # Get pole vector.
+        # self.getPoleVector()
 
-        # Get controls.
-        self.getControls()
-
-        # Get IKHandle.
-        self.getIKhandle()
-
-        # Get IK and FK constraints.
-        self.getFKconstraints()
-        self.getIKconstraints()
-
-        # Get pole vector.
-        self.getPoleVector()
+        # Populate dictionary.
+        self.populateDict()
 
     ################################
     # BASIC HELPER FUNCTIONS
@@ -128,6 +135,55 @@ class rigMirror(BaseWindow):
     ################################
     # GET FUNCTIONS
     ################################
+
+    # Take the selection and populate the dictionary with it.
+    def populateDict(self):
+        # Create FK and IK dictionaries to add FK and IK items to.
+        fk = {}
+        ik = {}
+
+        for each in self.selection:
+            # Get the FK and IK joint chains and store them in the dict.
+            if self.isFK(each):
+                if cmds.objectType(each, isType="joint"):
+                    fk[each] = {}
+
+                    # Get possible constraints attached to joint.
+                    fk[each]["const"] = self.getConst(each)
+
+            # Get the IK joint chains and store them in the dict.
+            if self.isIK(each):
+                if cmds.objectType(each, isType="joint"):
+                    ik[each] = {}
+
+                    # Get possible constraints attached to joint.
+                    # TODO : Find out why getting non FK parent constraints in list.
+                    ik[each]["const"] = self.getConst(each)
+
+        # Assign FK and IK as a keys
+        self.rig["FK"] = fk
+        self.rig["IK"] = ik
+
+        print("Rig Dictionary : ")
+        pprint.pprint(self.rig)
+
+    # Get constraints from a given joint.
+    def getConst(self, joint):
+        connections = cmds.listConnections(joint, source=True) or []
+        const = []
+
+        print("JOINT " + joint)
+
+        for each in connections:
+            if self.isConstraint(each):
+                if each not in const:
+                    const.append(each)
+            else:
+                break
+
+        print("CONST " + str(const))
+
+        return const
 
     # Get FK joint chain.
     def getFKjoints(self):
@@ -212,3 +268,11 @@ class rigMirror(BaseWindow):
     ################################
     # MIRROR FUNCTIONS
     ################################
+
+    # Mirror given joints.
+    def mirrorJoints(self, jointChain):
+        pass
+
+    # Mirror given controls.
+    def mirrorControls(self, controlChain):
+        pass
