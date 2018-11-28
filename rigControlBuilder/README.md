@@ -8,6 +8,7 @@ TODO
 ------
 * Clean up un-necessary code.
 * Add ability to change colours of shapes on creation.
+* Automate grouping and parent constraints. 
 
 Usage
 ------
