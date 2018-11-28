@@ -11,6 +11,8 @@ TODO
 
 Usage
 ------
+```
 import rigControlBuilder as rcb
 reload(rcb)
 rcb.controlBuilder().show()
+```
