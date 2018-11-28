@@ -3,11 +3,11 @@ import pymel.core as pm
 
 '''
 Steps for creating control.
-1. Create shape.
-2. Orient the shape in the right axis using xform.
-3. Group the control to itself and rename.
-4. Select shape control group and the joint it is going to control and parent them.
-5. Zero out translations and rotations on group.
+1. Create shape. X
+2. Orient the shape in the right axis using setattr. X
+3. Group the control to itself and rename. X
+4. Select shape control group and the joint it is going to control and parent them. X
+5. Zero out translations and rotations on group. X
 6. Un-parent joint and control group.
 '''
 
@@ -24,8 +24,11 @@ class controlBuilder(object):
 
     windowName = "RigControlBuilder"
     scriptName = 'controlBuilder'
-    height = 400
+    height = 80
     width = 400
+    xVal = 0
+    yVal = 0
+    zVal = 0
 
     def show(self):
         # If a window named "RigControlBuilder" already exists, delete the UI.
@@ -40,9 +43,11 @@ class controlBuilder(object):
 
     # Reset all text fields.
     def reset(self, *args):
-        pass
+        cmds.textField("xOrient", edit=True, text=0)
+        cmds.textField("yOrient", edit=True, text=0)
+        cmds.textField("zOrient", edit=True, text=0)
 
-    # Close the Renamer window.
+    # Close the window.
     def close(self, *args):
         cmds.deleteUI(self.windowName)
 
@@ -63,10 +68,15 @@ class controlBuilder(object):
 
         cmds.setParent('..')
 
+        # Set shape orientation.
+        cmds.rowLayout(numberOfColumns=4)
         cmds.text(label="Orientation: ", align='left', w=textWidth)
-
+        self.xVal = cmds.textField("xOrient", ann="X-axis", text=0, w=textWidth)
+        self.yVal = cmds.textField("yOrient", ann="Y-axis", text=0, w=textWidth)
+        self.zVal = cmds.textField("zOrient", ann="Z-axis", text=0, w=textWidth)
 
         cmds.setParent('..')
+
         # Create shape.
         cmds.rowLayout(numberOfColumns=2)
         pm.button(label="Create", align='right', command=self.createShapes, width=buttonWidth)
@@ -81,8 +91,13 @@ class controlBuilder(object):
         # Get selected joint(s)
         self.joints = cmds.ls(sl=True)
 
+        # Gets the type of shape we want to create.
         shapeType = pm.radioButtonGrp('shapeType_Btn', q=True, sl=True)
+        # List of new shapes created.
         newShapes = []
+
+        jointShapes = {}
+        jointGroups = {}
 
         print(str(self.joints))
 
@@ -90,11 +105,40 @@ class controlBuilder(object):
         for joint in self.joints:
             if shapeType == 1:
                 name = joint.split('_')[0] + "_ctrl"
-                newShapes.append(self.pickShape('Circle', name))
+                self.pickShape('Circle', name)
+                newShapes.append(name)
+                jointShapes.update({joint : name})
             elif shapeType == 2:
                 name = joint.split('_')[0] + "_ctrl"
-                newShapes.append(self.pickShape('Box', name))
+                self.pickShape('Box', name)
+                newShapes.append(name)
+                jointShapes.update({joint: name})
 
+        # Set Orientations.
+        self.xVal = float(cmds.textField("xOrient", q=True, text=True))
+        self.yVal = float(cmds.textField("yOrient", q=True, text=True))
+        self.zVal = float(cmds.textField("zOrient", q=True, text=True))
+
+        for shape in newShapes:
+            cmds.setAttr(shape + '.rotateX', self.xVal)
+            cmds.setAttr(shape + '.rotateY', self.yVal)
+            cmds.setAttr(shape + '.rotateZ', self.zVal)
+
+        # Group and rename.
+        for key, value in jointShapes.items():
+            cmds.group(value, n=value + 'Grp')
+            jointGroups.update({key : value + 'Grp'})
+
+        # Parent, zero out translations and rotations, and un-parent.
+        for key, value in jointGroups.items():
+            cmds.parent(value, key)
+            cmds.setAttr(value + '.translateX', 0)
+            cmds.setAttr(value + '.translateY', 0)
+            cmds.setAttr(value + '.translateZ', 0)
+            cmds.setAttr(value + '.rotateX', 0)
+            cmds.setAttr(value + '.rotateY', 0)
+            cmds.setAttr(value + '.rotateZ', 0)
+            cmds.parent(value, world=True)
 
     def pickShape(self, shape, name):
         if shape == 'Circle':
@@ -109,3 +153,4 @@ class controlBuilder(object):
                                  (-1, -1, -1), (-1, -1, 1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1)],
                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
             return box
+
