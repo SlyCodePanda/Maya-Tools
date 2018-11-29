@@ -9,6 +9,7 @@ TODO
 * Clean up un-necessary code.
 * Add ability to add controls to new layer.
 * Fix unique naming issue.
+* Add more shapes (arrow, star, etc..)
 
 Usage
 ------
