@@ -12,9 +12,12 @@ Steps taken to create control(s).
 7. Parent controls under each-other if checkbox is set to True.
 8. Parent constraint joints to controls.
 
+# TODOs
+* Add ability for user to set naming format.
+
+# Nice TODOs
 * Add colour picker to change the shapes colour.
-* Give option to add to new layer?
-* Ask if the shape being built is a pole vector?
+* Give option to add to new layer.
 '''
 
 
@@ -74,6 +77,11 @@ class controlBuilder(object):
 
         cmds.setParent('..')
 
+        # Set naming format.
+        # TODO : Set a way for user to enter a naming format.
+
+        #cmds.setParent('..')
+
         # Set shape orientation.
         cmds.rowLayout(numberOfColumns=4)
         cmds.text(label="Orientation: ", align='left', w=textWidth)
@@ -126,22 +134,26 @@ class controlBuilder(object):
         # Currently outputs an error when trying to create multiple controls at the same joint.
         for joint in self.joints:
             if shapeType == 1:
-                name = joint.split('_')[0] + "_ctrl"
+                name = joint.split('_')[1] + "_ctrl"
+
                 # Check if name already exists.
                 if cmds.objExists(name):
-                    cmds.error("Trying to create a shape with the same name."
+                    cmds.error(name + " : Trying to create a shape with the same name."
                                "Please change the name of previously built shape..")
                     return
+
                 # Checks if this control should be a pole vector naming convention.
                 elif cmds.checkBox('poleVector_checkBox', q=True, value=True):
                     name = "poleVector_ctrl"
+
                 self.pickShape('Circle', name)
                 newShapes.append(name)
                 jointShapes.update({joint : name})
+
             elif shapeType == 2:
                 name = joint.split('_')[0] + "_ctrl"
                 if cmds.objExists(name):
-                    cmds.error("Trying to create a shape with the same name. "
+                    cmds.error(name + " : Trying to create a shape with the same name. "
                                "Please change the name of previously built shape..")
                     return
                     # Checks if this control should be a pole vector naming convention.
