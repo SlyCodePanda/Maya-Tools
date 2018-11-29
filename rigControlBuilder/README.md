@@ -1,14 +1,15 @@
 # Rig Control Builder
 
-Tool to quickly create controls for rig joints.
+Tool to quickly create and parent constraint controls for rig joints.
 
 <img width=600px src="https://github.com/SlyCodePanda/Maya-Tools/blob/master/rigControlBuilder/screenCap.JPG" />
 
 TODO
 ------
 * Clean up un-necessary code.
-* Add ability to change colours of shapes on creation.
-* Automate grouping and parent constraints. 
+* Add ability to add controls to new layer.
+* Fix unique naming issue.
+* Add more shapes (arrow, star, etc..)
 
 Usage
 ------
