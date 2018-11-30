@@ -9,7 +9,7 @@ Nice TODOs
 ------
 * Add colour picker to change the shapes colour.
 * Give option to add to new layer.
-* Add more shapes (arrow, star, etc..)
+* Add more shapes (arrow, star, sphere, etc..)
 
 Important TODOs
 ------
