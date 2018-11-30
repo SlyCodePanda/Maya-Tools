@@ -16,8 +16,8 @@ Steps taken to create control(s).
 # TODOs
 * Add ability for user to set naming format?
 * Clean up un-necessary code.
+* Create cleaner way of creating different shapes with less code duplication.
 * Fix unique naming issue.
-* Have it so you can only select one of the checkboxes at a time.
 
 # Nice TODOs
 * Add colour picker to change the shapes colour.
@@ -40,9 +40,6 @@ class controlBuilder(object):
     scriptName = 'controlBuilder'
     height = 100
     width = 400
-    xVal = 0
-    yVal = 0
-    zVal = 0
 
     def show(self):
         # If a window named "RigControlBuilder" already exists, delete the UI.
@@ -89,9 +86,9 @@ class controlBuilder(object):
         # Set shape scale.
         cmds.rowLayout(numberOfColumns=4)
         cmds.text(label="Scale: ", align='left', w=textWidth)
-        self.xVal = cmds.textField("xScale", ann="X-axis", text=1, w=textWidth)
-        self.yVal = cmds.textField("yScale", ann="Y-axis", text=1, w=textWidth)
-        self.zVal = cmds.textField("zScale", ann="Z-axis", text=1, w=textWidth)
+        cmds.textField("xScale", ann="X-axis", text=1, w=textWidth)
+        cmds.textField("yScale", ann="Y-axis", text=1, w=textWidth)
+        cmds.textField("zScale", ann="Z-axis", text=1, w=textWidth)
 
 
         cmds.setParent('..')
@@ -105,16 +102,7 @@ class controlBuilder(object):
 
         cmds.setParent('..')
 
-        # Select whether you want to parent the chain of controls and their groups.
-        # cmds.rowLayout(numberOfColumns=3)
-        # cmds.checkBox('parentControls_checkBox', label="Parent controls under each other")
-        #
-        # # Select whether the control we are building is intended as a Pole Vector control.
-        # cmds.checkBox('poleVector_checkBox', label="Pole Vector")
-        #
-        # cmds.setParent('..')
-
-        # Change separate checkboxes into a radiobuttonGrp.
+        # Select whether this control is a pole vector or you want to parent them under each other.
         cmds.rowLayout(numberOfColumns=3)
         cmds.radioButtonGrp('parentAndPole_checkboxGrp', numberOfRadioButtons=2, cw=[1, 120],
                          labelArray2=['Parent controls', 'Pole Vector'])
@@ -148,17 +136,13 @@ class controlBuilder(object):
         # List of items that will be used to group under each other.
         controlAndGroup = []
 
-        print("RadioButton selected: ")
-        print(cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True))
-
         # TODO : Need to figure out a way to only allow for unique names to be created.
+        # TODO : Need to work out a cleaner way of creating different shapes with less code duplication.
 
         # Create controls for all the joints depending on which radio button is selected.
         # Currently outputs an error when trying to create multiple controls at the same joint.
         for joint in self.joints:
-            print("CUR JOINT : " + joint)
             if shapeType == 1:
-                #name = joint.split('_')[1] + "_ctrl"
                 name = joint + "_ctrl"
 
                 # Checks if this control should be a pole vector naming convention.
@@ -176,7 +160,6 @@ class controlBuilder(object):
                 jointShapes.update({joint : name})
 
             elif shapeType == 2:
-                #name = joint.split('_')[1] + "_ctrl"
                 name = joint + "_ctrl"
 
                 # Checks if this control should be a pole vector naming convention.
@@ -194,17 +177,17 @@ class controlBuilder(object):
                 jointShapes.update({joint: name})
 
         # Set Orientations.
-        self.xVal = float(cmds.textField("xOrient", q=True, text=True))
-        self.yVal = float(cmds.textField("yOrient", q=True, text=True))
-        self.zVal = float(cmds.textField("zOrient", q=True, text=True))
+        xOri = float(cmds.textField("xOrient", q=True, text=True))
+        yOri = float(cmds.textField("yOrient", q=True, text=True))
+        zOri = float(cmds.textField("zOrient", q=True, text=True))
 
         for shape in newShapes:
-            if self.xVal != 0.0:
-                cmds.setAttr(shape + '.rotateX', self.xVal)
-            elif self.yVal != 0.0:
-                cmds.setAttr(shape + '.rotateY', self.yVal)
-            elif self.zVal != 0.0:
-                cmds.setAttr(shape + '.rotateZ', self.zVal)
+            if xOri != 0.0:
+                cmds.setAttr(shape + '.rotateX', xOri)
+            elif yOri != 0.0:
+                cmds.setAttr(shape + '.rotateY', yOri)
+            elif zOri != 0.0:
+                cmds.setAttr(shape + '.rotateZ', zOri)
 
         # Set Scale.
         xScale = float(cmds.textField("xScale", q=True, text=True))
@@ -224,10 +207,6 @@ class controlBuilder(object):
             controlAndGroup.insert(0, value +'Grp')
             controlAndGroup.insert(0, value)
 
-        # Check list of group and control items.
-        print("Control and Group Pairs")
-        print(controlAndGroup)
-
         # Parent, zero out translations and rotations, and un-parent.
         for key, value in jointGroups.items():
             cmds.parent(value, key)
@@ -244,12 +223,9 @@ class controlBuilder(object):
         if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 1:
             for index in range(len(controlAndGroup)):
                 if self.isGroup(controlAndGroup[index]) and index != len(controlAndGroup)-1:
-                    print("Group " + controlAndGroup[index] + " to " + controlAndGroup[index+1])
                     cmds.parent(controlAndGroup[index], controlAndGroup[index+1])
 
             # Parent constraint control to joints IF checkbox is on.
-            print("Control and Joint Pairs : ")
-            print(jointShapes)
             for key, value in jointShapes.items():
                 cmds.parentConstraint(value, key)
 
