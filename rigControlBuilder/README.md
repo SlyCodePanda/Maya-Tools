@@ -17,7 +17,6 @@ Important TODOs
 * Create cleaner way of creating different shapes with less code duplication.
 * Add ability for user to set naming format.
 * Fix unique naming issue.
-* Have it so you can only select one of the checkboxes at a time.
 
 Usage
 ------
