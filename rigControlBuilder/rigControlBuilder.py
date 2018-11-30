@@ -61,6 +61,10 @@ class controlBuilder(object):
         cmds.textField("yOrient", edit=True, text=0)
         cmds.textField("zOrient", edit=True, text=0)
 
+        cmds.textField("xScale", edit=True, text=1)
+        cmds.textField("yScale", edit=True, text=1)
+        cmds.textField("zScale", edit=True, text=1)
+
     # Close the window.
     def close(self, *args):
         cmds.deleteUI(self.windowName)
@@ -102,11 +106,18 @@ class controlBuilder(object):
         cmds.setParent('..')
 
         # Select whether you want to parent the chain of controls and their groups.
-        cmds.rowLayout(numberOfColumns=3)
-        cmds.checkBox('parentControls_checkBox', label="Parent controls under each other")
+        # cmds.rowLayout(numberOfColumns=3)
+        # cmds.checkBox('parentControls_checkBox', label="Parent controls under each other")
+        #
+        # # Select whether the control we are building is intended as a Pole Vector control.
+        # cmds.checkBox('poleVector_checkBox', label="Pole Vector")
+        #
+        # cmds.setParent('..')
 
-        # Select whether the control we are building is intended as a Pole Vector control.
-        cmds.checkBox('poleVector_checkBox', label="Pole Vector")
+        # Change separate checkboxes into a radiobuttonGrp.
+        cmds.rowLayout(numberOfColumns=3)
+        cmds.radioButtonGrp('parentAndPole_checkboxGrp', numberOfRadioButtons=2, cw=[1, 120],
+                         labelArray2=['Parent controls', 'Pole Vector'])
 
         cmds.setParent('..')
 
@@ -137,7 +148,8 @@ class controlBuilder(object):
         # List of items that will be used to group under each other.
         controlAndGroup = []
 
-        print("LIST OF JOINTS SELECTED : " + str(self.joints))
+        print("RadioButton selected: ")
+        print(cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True))
 
         # TODO : Need to figure out a way to only allow for unique names to be created.
 
@@ -150,7 +162,7 @@ class controlBuilder(object):
                 name = joint + "_ctrl"
 
                 # Checks if this control should be a pole vector naming convention.
-                if cmds.checkBox('poleVector_checkBox', q=True, value=True):
+                if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 2:
                     name = joint.split('_')[0] + "_poleVector_ctrl"
 
                 # Check if name already exists.
@@ -168,7 +180,7 @@ class controlBuilder(object):
                 name = joint + "_ctrl"
 
                 # Checks if this control should be a pole vector naming convention.
-                if cmds.checkBox('poleVector_checkBox', q=True, value=True):
+                if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 2:
                     name = joint.split('_')[0] + "_poleVector_ctrl"
 
                 # Check if name already exists.
@@ -229,7 +241,7 @@ class controlBuilder(object):
 
         # Parent controls and groups under each other.
         # Iterate through the list and group the items up the chain IF the checkbox is on.
-        if cmds.checkBox('parentControls_checkBox', q=True, value=True):
+        if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 1:
             for index in range(len(controlAndGroup)):
                 if self.isGroup(controlAndGroup[index]) and index != len(controlAndGroup)-1:
                     print("Group " + controlAndGroup[index] + " to " + controlAndGroup[index+1])
