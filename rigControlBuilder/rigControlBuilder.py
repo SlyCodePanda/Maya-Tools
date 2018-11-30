@@ -1,5 +1,6 @@
 from maya import cmds
 import pymel.core as pm
+from collections import OrderedDict
 
 '''
 Steps taken to create control(s).
@@ -13,11 +14,15 @@ Steps taken to create control(s).
 8. Parent constraint joints to controls.
 
 # TODOs
-* Add ability for user to set naming format.
+* Add ability for user to set naming format?
+* Clean up un-necessary code.
+* Fix unique naming issue.
+* Have it so you can only select one of the checkboxes at a time.
 
 # Nice TODOs
 * Add colour picker to change the shapes colour.
 * Give option to add to new layer.
+* Add more shapes (arrow, star, etc..)
 '''
 
 
@@ -77,17 +82,22 @@ class controlBuilder(object):
 
         cmds.setParent('..')
 
-        # Set naming format.
-        # TODO : Set a way for user to enter a naming format.
+        # Set shape scale.
+        cmds.rowLayout(numberOfColumns=4)
+        cmds.text(label="Scale: ", align='left', w=textWidth)
+        self.xVal = cmds.textField("xScale", ann="X-axis", text=1, w=textWidth)
+        self.yVal = cmds.textField("yScale", ann="Y-axis", text=1, w=textWidth)
+        self.zVal = cmds.textField("zScale", ann="Z-axis", text=1, w=textWidth)
 
-        #cmds.setParent('..')
+
+        cmds.setParent('..')
 
         # Set shape orientation.
         cmds.rowLayout(numberOfColumns=4)
         cmds.text(label="Orientation: ", align='left', w=textWidth)
-        self.xVal = cmds.textField("xOrient", ann="X-axis", text=0, w=textWidth)
-        self.yVal = cmds.textField("yOrient", ann="Y-axis", text=0, w=textWidth)
-        self.zVal = cmds.textField("zOrient", ann="Z-axis", text=0, w=textWidth)
+        cmds.textField("xOrient", ann="X-axis", text=0, w=textWidth)
+        cmds.textField("yOrient", ann="Y-axis", text=0, w=textWidth)
+        cmds.textField("zOrient", ann="Z-axis", text=0, w=textWidth)
 
         cmds.setParent('..')
 
@@ -112,6 +122,7 @@ class controlBuilder(object):
 
     def createShapes(self, *args):
         # Get selected joint(s)
+        #cmds.selectPref(tso=True)
         self.joints = cmds.ls(sl=True)
 
         # Gets the type of shape we want to create.
@@ -120,45 +131,52 @@ class controlBuilder(object):
         newShapes = []
 
         # Dictionaries
-        jointShapes = {}
+        jointShapes = OrderedDict()
         jointGroups = {}
 
         # List of items that will be used to group under each other.
         controlAndGroup = []
 
-        print(str(self.joints))
+        print("LIST OF JOINTS SELECTED : " + str(self.joints))
 
         # TODO : Need to figure out a way to only allow for unique names to be created.
 
         # Create controls for all the joints depending on which radio button is selected.
         # Currently outputs an error when trying to create multiple controls at the same joint.
         for joint in self.joints:
+            print("CUR JOINT : " + joint)
             if shapeType == 1:
-                name = joint.split('_')[1] + "_ctrl"
-
-                # Check if name already exists.
-                if cmds.objExists(name):
-                    cmds.error(name + " : Trying to create a shape with the same name."
-                               "Please change the name of previously built shape..")
-                    return
+                #name = joint.split('_')[1] + "_ctrl"
+                name = joint + "_ctrl"
 
                 # Checks if this control should be a pole vector naming convention.
-                elif cmds.checkBox('poleVector_checkBox', q=True, value=True):
-                    name = "poleVector_ctrl"
+                if cmds.checkBox('poleVector_checkBox', q=True, value=True):
+                    name = joint.split('_')[0] + "_poleVector_ctrl"
+
+                # Check if name already exists.
+                elif cmds.objExists(name):
+                    cmds.error(name + " : Trying to create a shape with the same name."
+                                      "Please change the name of previously built shape..")
+                    return
 
                 self.pickShape('Circle', name)
                 newShapes.append(name)
                 jointShapes.update({joint : name})
 
             elif shapeType == 2:
-                name = joint.split('_')[0] + "_ctrl"
-                if cmds.objExists(name):
-                    cmds.error(name + " : Trying to create a shape with the same name. "
-                               "Please change the name of previously built shape..")
+                #name = joint.split('_')[1] + "_ctrl"
+                name = joint + "_ctrl"
+
+                # Checks if this control should be a pole vector naming convention.
+                if cmds.checkBox('poleVector_checkBox', q=True, value=True):
+                    name = joint.split('_')[0] + "_poleVector_ctrl"
+
+                # Check if name already exists.
+                elif cmds.objExists(name):
+                    cmds.error(name + " : Trying to create a shape with the same name."
+                                      "Please change the name of previously built shape..")
                     return
-                    # Checks if this control should be a pole vector naming convention.
-                elif cmds.checkBox('poleVector_checkBox', q=True, value=True):
-                    name = "poleVector_ctrl"
+
                 self.pickShape('Box', name)
                 newShapes.append(name)
                 jointShapes.update({joint: name})
@@ -176,6 +194,16 @@ class controlBuilder(object):
             elif self.zVal != 0.0:
                 cmds.setAttr(shape + '.rotateZ', self.zVal)
 
+        # Set Scale.
+        xScale = float(cmds.textField("xScale", q=True, text=True))
+        yScale = float(cmds.textField("yScale", q=True, text=True))
+        zScale = float(cmds.textField("zScale", q=True, text=True))
+
+        for shape in newShapes:
+            cmds.setAttr(shape + '.scaleX', xScale)
+            cmds.setAttr(shape + '.scaleY', yScale)
+            cmds.setAttr(shape + '.scaleZ', zScale)
+
         # Group and rename.
         for key, value in jointShapes.items():
             cmds.group(value, n=value + 'Grp')
@@ -185,6 +213,7 @@ class controlBuilder(object):
             controlAndGroup.insert(0, value)
 
         # Check list of group and control items.
+        print("Control and Group Pairs")
         print(controlAndGroup)
 
         # Parent, zero out translations and rotations, and un-parent.
@@ -203,7 +232,7 @@ class controlBuilder(object):
         if cmds.checkBox('parentControls_checkBox', q=True, value=True):
             for index in range(len(controlAndGroup)):
                 if self.isGroup(controlAndGroup[index]) and index != len(controlAndGroup)-1:
-                    # print("Group " + controlAndGroup[index] + " to " + controlAndGroup[index+1])
+                    print("Group " + controlAndGroup[index] + " to " + controlAndGroup[index+1])
                     cmds.parent(controlAndGroup[index], controlAndGroup[index+1])
 
             # Parent constraint control to joints IF checkbox is on.
