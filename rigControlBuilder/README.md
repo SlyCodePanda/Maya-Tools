@@ -15,6 +15,7 @@ Important TODOs
 * Clean up un-necessary code.
 * Add ability for user to set naming format.
 * Fix unique naming issue.
+* Have it so you can only select one of the checkboxes at a time.
 
 Usage
 ------
