@@ -182,12 +182,12 @@ class controlBuilder(object):
         zOri = float(cmds.textField("zOrient", q=True, text=True))
 
         for shape in newShapes:
-            if xOri != 0.0:
-                cmds.setAttr(shape + '.rotateX', xOri)
-            elif yOri != 0.0:
-                cmds.setAttr(shape + '.rotateY', yOri)
-            elif zOri != 0.0:
-                cmds.setAttr(shape + '.rotateZ', zOri)
+            #if xOri != 0.0:
+            cmds.setAttr(shape + '.rotateX', xOri)
+            #elif yOri != 0.0:
+            cmds.setAttr(shape + '.rotateY', yOri)
+            #elif zOri != 0.0:
+            cmds.setAttr(shape + '.rotateZ', zOri)
 
         # Set Scale.
         xScale = float(cmds.textField("xScale", q=True, text=True))
