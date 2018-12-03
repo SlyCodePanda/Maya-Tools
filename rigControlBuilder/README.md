@@ -14,7 +14,6 @@ Nice TODOs
 Important TODOs
 ------
 * Clean up un-necessary code.
-* Create cleaner way of creating different shapes with less code duplication.
 * Add ability for user to set naming format.
 * Fix unique naming issue.
 
