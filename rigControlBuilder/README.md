@@ -16,6 +16,7 @@ Important TODOs
 * Clean up un-necessary code.
 * Add ability for user to set naming format.
 * Fix unique naming issue.
+* Have shape selection be a drop-down box instead of radio buttons, so adding different shapes takes up less room in UI.
 
 Usage
 ------
