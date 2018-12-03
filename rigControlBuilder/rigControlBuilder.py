@@ -17,6 +17,7 @@ Steps taken to create control(s).
 * Add ability for user to set naming format?
 * Clean up un-necessary code.
 * Fix unique naming issue.
+* Add more error messaging.
 
 # Nice TODOs
 * Add colour picker to change the shapes colour.
@@ -36,7 +37,6 @@ class controlBuilder(object):
     ########################
 
     windowName = "RigControlBuilder"
-    scriptName = 'controlBuilder'
     height = 120
     width = 400
 
@@ -76,9 +76,11 @@ class controlBuilder(object):
 
         # Set shape type.
         cmds.rowLayout(numberOfColumns=3)
-        cmds.text(label="Shape type: ", align='left', w=textWidth)
-        pm.radioButtonGrp("shapeType_Btn", labelArray2=('Circle', 'Box'), numberOfRadioButtons=2,
-                          columnWidth3=[50, 50, 50], select=1)
+        cmds.optionMenu("shapeType_optionMenu", label='Shape Type')
+        cmds.menuItem(label='Circle')
+        cmds.menuItem(label='Box')
+        cmds.menuItem(label='Sphere')
+        cmds.menuItem(label='Diamond')
 
         cmds.setParent('..')
 
@@ -101,9 +103,9 @@ class controlBuilder(object):
 
         cmds.setParent('..')
 
-        # Select whether this control is a pole vector or you want to parent them under each other.
+        # Select whether this control is a singular control, a pole vector or you want to parent them under each other.
         cmds.rowLayout(numberOfColumns=4)
-        cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', numberOfRadioButtons=3, cw=[1, 120],
+        cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', numberOfRadioButtons=3, cw=[1, 120], select=1,
                          labelArray3=['Singular Control', 'Parent Controls', 'Pole Vector'])
 
         cmds.setParent('..')
@@ -120,11 +122,15 @@ class controlBuilder(object):
 
     def createShapes(self, *args):
         # Get selected joint(s)
-        #cmds.selectPref(tso=True)
         self.joints = cmds.ls(sl=True)
 
+        # Return an error if there are no joints selected.
+        if not self.joints:
+            cmds.error("Please select joint(s) to creates shapes for.")
+            return
+
         # Gets the type of shape we want to create.
-        shapeType = pm.radioButtonGrp('shapeType_Btn', q=True, sl=True)
+        shapeType = pm.optionMenu('shapeType_optionMenu', q=True, sl=True)
         # List of new shapes created.
         newShapes = []
 
@@ -139,22 +145,56 @@ class controlBuilder(object):
 
         # Create controls for all the joints depending on which radio button is selected.
         for joint in self.joints:
+
+            # If item in the joints list is not a joint, return an error.
+            if not cmds.objectType(joint, isType="joint"):
+                cmds.error("The list of joints you have selected contains a non-joint.")
+                return
+            
             name = joint + "_ctrl"
 
             # Checks if this control should be a pole vector naming convention.
             if cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', q=True, sl=True) == 3:
                 name = joint.split('_')[0] + "_poleVector_ctrl"
+                if cmds.objExists(name):
+                    cmds.select(name)
+                    # Generate a new name based off of old obj.
+                    newName = cmds.rename(name + "_#")
+                    cmds.rename(name)
+                    print(newName)
+                    name = newName
 
-            # Check if name already exists.
+            # Check if name already exists, if it does rename it with a unique number on the end.
             elif cmds.objExists(name):
-                cmds.error(name + " : Trying to create a shape with the same name."
-                                  "Please change the name of previously built shape..")
-                return
+                cmds.select(name)
+                # Generate a new name based off of old obj.
+                newName = cmds.rename(name+"_#")
+                cmds.rename(name)
+                print(newName)
+                name = newName
 
+            print("The Name is : " + name)
             self.pickShape(shapeType, name)
             newShapes.append(name)
             jointShapes.update({joint : name})
+            print("jointShapes : " + str(jointShapes))
+            print("newShapes : " + str(newShapes))
 
+        # New way of creation that allows for renaming properly if already exists.
+        # for joint in self.joints:
+        #     name = joint + "_ctrl"
+        #
+        #     if cmds.objExists(name):
+        #         cmds.select(name)
+        #         # Generate a new name based off of old obj.
+        #         newName = cmds.rename(name+"_#")
+        #         cmds.rename(name)
+        #         print(newName)
+        #         return
+        #     else:
+        #         self.pickShape(shapeType, name)
+        #         newShapes.append(name)
+        #         jointShapes.update({joint : name})
 
         # Set Orientations.
         xOri = float(cmds.textField("xOrient", q=True, text=True))
@@ -162,11 +202,8 @@ class controlBuilder(object):
         zOri = float(cmds.textField("zOrient", q=True, text=True))
 
         for shape in newShapes:
-            #if xOri != 0.0:
             cmds.setAttr(shape + '.rotateX', xOri)
-            #elif yOri != 0.0:
             cmds.setAttr(shape + '.rotateY', yOri)
-            #elif zOri != 0.0:
             cmds.setAttr(shape + '.rotateZ', zOri)
 
         # Set Scale.
@@ -227,6 +264,17 @@ class controlBuilder(object):
                                  (-1, -1, -1), (-1, -1, 1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1)],
                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
             return box
+        elif shape == 3:
+            sphere = cmds.sphere(name=name, po=0)
+            return sphere
+        elif shape == 4:
+            diamond = pm.curve(name=name, d=1, p=[(0, 1, 0), (-1, 0.00278996, 6.18172e-08), (0, 0, 1), (0, 1, 0),
+                                       (1, 0.00278996, 0), (0, 0, 1), (1, 0.00278996, 0), (0, 0, -1), (0, 1, 0),
+                                       (0, 0, -1), (-1, 0.00278996, 6.18172e-08), (0, -1, 0), (0, 0, -1),
+                                       (1, 0.00278996, 0),(0, -1, 0),(0, 0, 1)],
+                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+            return diamond
+
 
     # Returns True if node is a group, False otherwise.
     def isGroup(self, node):
