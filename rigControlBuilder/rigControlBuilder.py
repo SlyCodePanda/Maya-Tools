@@ -16,7 +16,6 @@ Steps taken to create control(s).
 # TODOs
 * Add ability for user to set naming format?
 * Clean up un-necessary code.
-* Create cleaner way of creating different shapes with less code duplication.
 * Fix unique naming issue.
 
 # Nice TODOs
@@ -38,7 +37,7 @@ class controlBuilder(object):
 
     windowName = "RigControlBuilder"
     scriptName = 'controlBuilder'
-    height = 100
+    height = 120
     width = 400
 
     def show(self):
@@ -103,9 +102,9 @@ class controlBuilder(object):
         cmds.setParent('..')
 
         # Select whether this control is a pole vector or you want to parent them under each other.
-        cmds.rowLayout(numberOfColumns=3)
-        cmds.radioButtonGrp('parentAndPole_checkboxGrp', numberOfRadioButtons=2, cw=[1, 120],
-                         labelArray2=['Parent controls', 'Pole Vector'])
+        cmds.rowLayout(numberOfColumns=4)
+        cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', numberOfRadioButtons=3, cw=[1, 120],
+                         labelArray3=['Singular Control', 'Parent Controls', 'Pole Vector'])
 
         cmds.setParent('..')
 
@@ -137,44 +136,25 @@ class controlBuilder(object):
         controlAndGroup = []
 
         # TODO : Need to figure out a way to only allow for unique names to be created.
-        # TODO : Need to work out a cleaner way of creating different shapes with less code duplication.
 
         # Create controls for all the joints depending on which radio button is selected.
-        # Currently outputs an error when trying to create multiple controls at the same joint.
         for joint in self.joints:
-            if shapeType == 1:
-                name = joint + "_ctrl"
+            name = joint + "_ctrl"
 
-                # Checks if this control should be a pole vector naming convention.
-                if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 2:
-                    name = joint.split('_')[0] + "_poleVector_ctrl"
+            # Checks if this control should be a pole vector naming convention.
+            if cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', q=True, sl=True) == 3:
+                name = joint.split('_')[0] + "_poleVector_ctrl"
 
-                # Check if name already exists.
-                elif cmds.objExists(name):
-                    cmds.error(name + " : Trying to create a shape with the same name."
-                                      "Please change the name of previously built shape..")
-                    return
+            # Check if name already exists.
+            elif cmds.objExists(name):
+                cmds.error(name + " : Trying to create a shape with the same name."
+                                  "Please change the name of previously built shape..")
+                return
 
-                self.pickShape('Circle', name)
-                newShapes.append(name)
-                jointShapes.update({joint : name})
+            self.pickShape(shapeType, name)
+            newShapes.append(name)
+            jointShapes.update({joint : name})
 
-            elif shapeType == 2:
-                name = joint + "_ctrl"
-
-                # Checks if this control should be a pole vector naming convention.
-                if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 2:
-                    name = joint.split('_')[0] + "_poleVector_ctrl"
-
-                # Check if name already exists.
-                elif cmds.objExists(name):
-                    cmds.error(name + " : Trying to create a shape with the same name."
-                                      "Please change the name of previously built shape..")
-                    return
-
-                self.pickShape('Box', name)
-                newShapes.append(name)
-                jointShapes.update({joint: name})
 
         # Set Orientations.
         xOri = float(cmds.textField("xOrient", q=True, text=True))
@@ -220,7 +200,7 @@ class controlBuilder(object):
 
         # Parent controls and groups under each other.
         # Iterate through the list and group the items up the chain IF the checkbox is on.
-        if cmds.radioButtonGrp('parentAndPole_checkboxGrp', q=True, sl=True) == 1:
+        if cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', q=True, sl=True) == 2:
             for index in range(len(controlAndGroup)):
                 if self.isGroup(controlAndGroup[index]) and index != len(controlAndGroup)-1:
                     cmds.parent(controlAndGroup[index], controlAndGroup[index+1])
@@ -235,11 +215,11 @@ class controlBuilder(object):
 
     # Returns the right curve based on the shape name passed, also names it according to name passed.
     def pickShape(self, shape, name):
-        if shape == 'Circle':
+        if shape == 1:
             # Circle shape control.
             circle = pm.circle(n=name, nr=[0, 1, 0])
             return circle
-        elif shape == 'Box':
+        elif shape == 2:
             # Box/cube shape control.
             box = pm.curve(n=name, d=1,
                               p=[(1, 1, 1), (1, 1, -1), (-1, 1, -1), (-1, 1, 1), (1, 1, 1), (1, -1, 1),
