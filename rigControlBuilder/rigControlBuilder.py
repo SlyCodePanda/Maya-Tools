@@ -16,8 +16,6 @@ Steps taken to create control(s).
 # TODOs
 * Add ability for user to set naming format?
 * Clean up un-necessary code.
-* Fix unique naming issue.
-* Add more error messaging.
 
 # Nice TODOs
 * Add colour picker to change the shapes colour.
@@ -141,60 +139,40 @@ class controlBuilder(object):
         # List of items that will be used to group under each other.
         controlAndGroup = []
 
-        # TODO : Need to figure out a way to only allow for unique names to be created.
-
         # Create controls for all the joints depending on which radio button is selected.
         for joint in self.joints:
 
             # If item in the joints list is not a joint, return an error.
             if not cmds.objectType(joint, isType="joint"):
-                cmds.error("The list of joints you have selected contains a non-joint.")
+                cmds.error("You have selected an object or objects that isn't a joint. Please only select joints.")
                 return
-            
+
             name = joint + "_ctrl"
 
             # Checks if this control should be a pole vector naming convention.
             if cmds.radioButtonGrp('parentAndPole_radiobuttonGrp', q=True, sl=True) == 3:
                 name = joint.split('_')[0] + "_poleVector_ctrl"
                 if cmds.objExists(name):
+                    cmds.warning("Pole vector shape already exists, creating shape with unique name...")
                     cmds.select(name)
                     # Generate a new name based off of old obj.
                     newName = cmds.rename(name + "_#")
                     cmds.rename(name)
-                    print(newName)
                     name = newName
 
             # Check if name already exists, if it does rename it with a unique number on the end.
             elif cmds.objExists(name):
+                cmds.warning("Shape(s) on this joint(s) already exists, creating shape with unique name "
+                             "(Parent controls may be affected)...")
                 cmds.select(name)
                 # Generate a new name based off of old obj.
                 newName = cmds.rename(name+"_#")
                 cmds.rename(name)
-                print(newName)
                 name = newName
 
-            print("The Name is : " + name)
             self.pickShape(shapeType, name)
             newShapes.append(name)
             jointShapes.update({joint : name})
-            print("jointShapes : " + str(jointShapes))
-            print("newShapes : " + str(newShapes))
-
-        # New way of creation that allows for renaming properly if already exists.
-        # for joint in self.joints:
-        #     name = joint + "_ctrl"
-        #
-        #     if cmds.objExists(name):
-        #         cmds.select(name)
-        #         # Generate a new name based off of old obj.
-        #         newName = cmds.rename(name+"_#")
-        #         cmds.rename(name)
-        #         print(newName)
-        #         return
-        #     else:
-        #         self.pickShape(shapeType, name)
-        #         newShapes.append(name)
-        #         jointShapes.update({joint : name})
 
         # Set Orientations.
         xOri = float(cmds.textField("xOrient", q=True, text=True))
@@ -244,7 +222,7 @@ class controlBuilder(object):
 
             # Parent constraint control to joints IF checkbox is on.
             for key, value in jointShapes.items():
-                cmds.parentConstraint(value, key)
+                cmds.parentConstraint(value, key, mo=True)
 
     ########################
     # Helper functions
@@ -274,7 +252,6 @@ class controlBuilder(object):
                                        (1, 0.00278996, 0),(0, -1, 0),(0, 0, 1)],
                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
             return diamond
-
 
     # Returns True if node is a group, False otherwise.
     def isGroup(self, node):
