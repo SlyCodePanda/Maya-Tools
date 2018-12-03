@@ -9,14 +9,13 @@ Nice TODOs
 ------
 * Add colour picker to change the shapes colour.
 * Give option to add to new layer.
-* Add more shapes (arrow, star, sphere, etc..)
+* Keep adding more shapes.
 
 Important TODOs
 ------
 * Clean up un-necessary code.
 * Add ability for user to set naming format.
-* Fix unique naming issue.
-* Have shape selection be a drop-down box instead of radio buttons, so adding different shapes takes up less room in UI.
+* Fix unique naming issue. (FIXED but kinda hacky)
 
 Usage
 ------
