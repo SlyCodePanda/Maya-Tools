@@ -18,8 +18,10 @@ from maya import cmds
 from maya import OpenMayaUI as omui
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
+from Qt.QtCore import Signal
 from shiboken2 import wrapInstance
 from functools import partial
+import logging
 
 
 def getMayaMainWindow():
@@ -141,9 +143,60 @@ class LightBuilder(QtWidgets.QWidget):
 
     # This function will create a light widget for the given light to add it to the UI.
     def addLight(self, light):
-        pass
+        # First we create the LightWidget.
+        widget = LightWidget(light)
+        # We add it to the scrollLayout.
+        self.scrollLayout.addWidget(widget)
+        # Then we connect the onSolo signal from the widget to our onSolo method.
+        widget.onSolo.connect(self.onSolo)
+
+    def onSolo(self, value):
+        # This function will isolate a single light.
+
+        # First we find all our children who are LightWidgets.
+        lightWidgets = self.findChildren(LightWidget)
+
+        # We'll loop through the list to perform our logic.
+        for widget in lightWidgets:
+            # Every signal lets us know who sent it that we can query with sender()
+            # So for every widget we check if its the sender.
+            if widget != self.sender():
+                # If it's not the widget, we'll disable it.
+                widget.disableLight(value)
 
 
+class LightWidget(QtWidgets.QWidget):
+    """
+        A Basic controller for controlling lights
+        to display it, give it the name of a light like so
+        ui = LightWidget('directionalLight1')
+        ui.show()
+    """
+
+    # This is our solo signal.
+    # We are creating our own signal for other Qt objects to connect to.
+    # Qt demands that we make the signal here so it knows what the class looks like.
+    onSolo = Signal(bool)
+
+    def __init__(self, light):
+        # Our init function takes the name of a light.
+
+        # We then call the init from QWidget to make sure that our object is initialized properly.
+        super(LightWidget, self).__init__()
+
+        # Then we store the pyMel node on this class.
+        self.light = light
+        # Finally we call the buildUI method.
+        self.buildUI()
+
+    def buildUI(self):
+        layout = QtWidgets.QGridLayout(self)
+
+        
+
+        # Now this is a weird Qt thing where we tell it the kind of sizing we want it respect.
+        # We are saying that the widget should never be larger than the maximum space it needs.
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
 
 
