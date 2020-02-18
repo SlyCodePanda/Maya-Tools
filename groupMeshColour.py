@@ -2,7 +2,6 @@ import maya.cmds as cmds
 
 '''
 Script to colour all the mesh inside a selected group.
-NOTE: Does not work if you already have drawing overrides switched on.
 '''
 
 ###################
