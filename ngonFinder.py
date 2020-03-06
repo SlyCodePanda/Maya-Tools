@@ -26,8 +26,9 @@ def analyzeFace(faces):
         maya.cmds.select(face, add=True)
         numOfTris = maya.cmds.polyEvaluate(tc=True)
 
-        if numOfTris % 2 != 0:
+        if numOfTris > 2:
             ngonCount += 1
+            print "ngon on ", face
 
         else:
             # deselect face.
@@ -43,7 +44,3 @@ def run():
         faces = maya.cmds.ls('%s.f[*]' % obj)
         print "Object Name: ", selObjs
         analyzeFace(faces)
-
-
-
-
