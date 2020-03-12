@@ -9,7 +9,7 @@ https://stackoverflow.com/questions/32428452/selecting-faces-in-a-list-maya-pyth
 """
 
 
-def analyzeFace(faces):
+def findNgons(faces):
     """
     Looks through the obj faces given and selects all the ngons in the list.
     :param faces: faces we want to look through for ngons.
@@ -55,5 +55,5 @@ def run():
 
     faces = maya.cmds.ls('%s.f[*]' % selObj[0])
     print "Object Name: ", selObj[0]
-    analyzeFace(faces)
+    findNgons(faces)
 
