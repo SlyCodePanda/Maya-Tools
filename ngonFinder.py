@@ -27,8 +27,8 @@ def analyzeFace(faces):
     for face in facesList:
         maya.cmds.select(face, add=True)
         numOfTris = maya.cmds.polyEvaluate(tc=True)
-        # deselect face.
-        maya.cmds.select(face, d=True)
+        # Clears selection.
+        maya.cmds.select(face, cl=True)
 
         if numOfTris > 2:
             ngonCount += 1
